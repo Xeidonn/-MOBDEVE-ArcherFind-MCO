@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="badge_found">#43A047</color>
+    <color name="badge_lost">#E53935</color>
+    <color name="dark_gray">#333333</color>
+    <color name="green_accent">#66BB6A</color>
+    <color name="green_primary">#2E7D32</color>
+    <color name="green_primary_dark">#1B5E20</color>
+    <color name="light_gray">#F5F5F5</color>
+    <color name="placeholder_bg">#BDBDBD</color>
+    <color name="white">#FFFFFF</color>
+    <string name="app_name">ArcherFind</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_notifications">Notifications</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_search">Search</string>
+    <style name="Theme.ArcherFind" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/green_primary</item>
+        <item name="colorPrimaryDark">@color/green_primary_dark</item>
+        <item name="colorAccent">@color/green_accent</item>
+    </style>
+</resources>

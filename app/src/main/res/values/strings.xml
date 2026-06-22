@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ArcherFind</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_notifications">Notifications</string>
+    <string name="nav_profile">Profile</string>
+</resources>
