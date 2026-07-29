@@ -1,0 +1,18 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+app/build/
+app/release/
+app/debug/
+
+# Secrets injected via local.properties (Maps API key, Supabase keys) are never committed.
+# google-services.json IS committed intentionally so the instructor's build works out of the box.
