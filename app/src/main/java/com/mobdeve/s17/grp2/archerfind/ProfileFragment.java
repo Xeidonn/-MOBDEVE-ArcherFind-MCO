@@ -12,6 +12,8 @@ import com.google.android.material.snackbar.Snackbar;
 
 public class ProfileFragment extends Fragment {
 
+    private final AuthRepository authRepository = new AuthRepository();
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -26,10 +28,11 @@ public class ProfileFragment extends Fragment {
         view.findViewById(R.id.btn_my_listings).setOnClickListener(v ->
                 Navigation.findNavController(v).navigate(R.id.action_profile_to_manageListings));
 
-        // Logout navigates back to Login (clears backstack)
+        // Logout clears the Firebase session and the entire back stack
         view.findViewById(R.id.btn_logout).setOnClickListener(v -> {
+            authRepository.logout();
             Snackbar.make(v, "Logged out", Snackbar.LENGTH_SHORT).show();
-            Navigation.findNavController(v).navigate(R.id.loginFragment);
+            Navigation.findNavController(v).navigate(R.id.action_logout_to_login);
         });
     }
 }

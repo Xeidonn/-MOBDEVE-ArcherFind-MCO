@@ -27,6 +27,11 @@ public class MainActivity extends AppCompatActivity {
         bottomNav = findViewById(R.id.bottom_nav);
         NavigationUI.setupWithNavController(bottomNav, navController);
 
+        // Skip Login on relaunch if a session is already active.
+        if (new AuthRepository().isLoggedIn()) {
+            navController.navigate(R.id.action_login_to_home);
+        }
+
         // Hide bottom nav on Login and Register screens
         navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
             int id = destination.getId();

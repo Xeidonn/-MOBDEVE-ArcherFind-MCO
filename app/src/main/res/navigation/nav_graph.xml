@@ -112,6 +112,12 @@
         <action
             android:id="@+id/action_profile_to_manageListings"
             app:destination="@id/manageListingsFragment" />
+        <!-- Logout: clear the entire back stack, not just up to Login -->
+        <action
+            android:id="@+id/action_logout_to_login"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <!-- Manage Listings screen -->
