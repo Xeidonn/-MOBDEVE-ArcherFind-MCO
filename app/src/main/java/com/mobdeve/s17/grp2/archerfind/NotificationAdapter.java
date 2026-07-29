@@ -28,7 +28,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         NotificationItem n = notifications.get(position);
         holder.title.setText(n.getTitle());
         holder.message.setText(n.getMessage());
-        holder.time.setText(n.getTime());
+        holder.time.setText(n.getRelativeTime());
     }
 
     @Override

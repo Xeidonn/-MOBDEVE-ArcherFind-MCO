@@ -40,9 +40,9 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
         Item item = items.get(position);
         holder.title.setText(item.getTitle());
         holder.location.setText(item.getLocation());
-        holder.date.setText(item.getDate());
+        holder.date.setText(item.getFormattedDate());
         holder.status.setText(item.getStatus());
-        holder.thumb.setImageResource(item.getImageResId());
+        holder.thumb.setImageResource(R.drawable.placeholder_image);
 
         if (item.getStatus().equals("Lost")) {
             holder.status.setBackgroundResource(R.color.badge_lost);

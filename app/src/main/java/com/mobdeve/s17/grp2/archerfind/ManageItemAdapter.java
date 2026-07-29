@@ -30,7 +30,7 @@ public class ManageItemAdapter extends RecyclerView.Adapter<ManageItemAdapter.Vi
         Item item = items.get(position);
         holder.title.setText(item.getTitle());
         holder.status.setText(item.getStatus());
-        holder.thumb.setImageResource(item.getImageResId());
+        holder.thumb.setImageResource(R.drawable.placeholder_image);
 
         // UI-only feedback via Snackbar
         holder.itemView.findViewById(R.id.btn_edit).setOnClickListener(v ->
