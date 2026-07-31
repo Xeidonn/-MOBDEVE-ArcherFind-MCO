@@ -93,6 +93,9 @@ Login ──→ Register
 - **Firestore security rules** are in test mode (open read/write, expiring ~30 days after the Firestore database was created) rather than locked-down production rules.
 - Search is a one-shot fetch-and-filter (Firestore has no native substring query), not a live-updating query.
 - Match notifications use a simple heuristic (same category + opposite status + unresolved), not keyword/description similarity.
+- No pull-to-refresh gesture on list screens — real-time Firestore listeners keep them current instead.
+- No profile photo upload (not in the proposal; account info otherwise is fully live).
+- No loading spinners/shimmer while data fetches — screens populate once Firestore responds.
 
 ## Group 2
 
