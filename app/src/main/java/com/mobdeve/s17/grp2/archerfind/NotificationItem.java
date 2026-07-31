@@ -10,6 +10,7 @@ public class NotificationItem {
     public static final String TYPE_CLAIM = "CLAIM";
     public static final String TYPE_COMMENT = "COMMENT";
     public static final String TYPE_MESSAGE = "MESSAGE";
+    public static final String TYPE_MATCH = "MATCH";
     public static final String TYPE_SYSTEM = "SYSTEM";
 
     private String id;

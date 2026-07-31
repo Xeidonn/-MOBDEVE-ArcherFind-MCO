@@ -58,6 +58,7 @@ public abstract class PostItemFragmentBase extends Fragment {
     protected final ItemRepository itemRepository = new ItemRepository();
     protected final AuthRepository authRepository = new AuthRepository();
     private final SupabaseStorageRepository storageRepository = new SupabaseStorageRepository();
+    private final NotificationRepository notificationRepository = new NotificationRepository();
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -367,6 +368,7 @@ public abstract class PostItemFragmentBase extends Fragment {
             @Override
             public void onSuccess(Item created) {
                 if (!isAdded()) return;
+                notifyPotentialMatches(created);
                 Snackbar.make(view, getSuccessMessage(), Snackbar.LENGTH_SHORT).show();
                 Navigation.findNavController(view).navigateUp();
             }
@@ -378,6 +380,35 @@ public abstract class PostItemFragmentBase extends Fragment {
                 Snackbar.make(view, "Failed to post item: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
             }
         });
+    }
+
+    // Best-effort: notifies posters of unresolved opposite-status items in the same
+    // category that a possible match was just posted. Doesn't block navigation on failure.
+    private void notifyPotentialMatches(Item created) {
+        String oppositeStatus = "Lost".equals(created.getStatus()) ? "Found" : "Lost";
+        itemRepository.findPotentialMatches(created.getCategory(), oppositeStatus, created.getOwnerId(),
+                new FirestoreListCallback<Item>() {
+                    @Override
+                    public void onChanged(List<Item> matches) {
+                        for (Item match : matches) {
+                            NotificationItem notification = new NotificationItem(match.getOwnerId(),
+                                    NotificationItem.TYPE_MATCH, "Possible Match Found",
+                                    "A new " + created.getStatus().toLowerCase(Locale.ROOT) + " item '" + created.getTitle()
+                                            + "' might match your '" + match.getTitle() + "' report.");
+                            notification.setRelatedItemId(created.getId());
+                            notificationRepository.create(notification, new FirestoreVoidCallback() {
+                                @Override
+                                public void onSuccess() { /* best-effort */ }
+
+                                @Override
+                                public void onError(Exception e) { /* best-effort */ }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) { /* best-effort, matching is not critical */ }
+                });
     }
 
     private void updateItem(View view, Item item, MaterialButton btnSubmit) {

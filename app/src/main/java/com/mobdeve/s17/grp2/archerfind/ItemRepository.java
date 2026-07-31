@@ -115,6 +115,29 @@ public class ItemRepository {
                 });
     }
 
+    // Unresolved items of the opposite status in the same category — a simple "might be the
+    // same item" heuristic used to notify posters of a possible match. Two pure equality
+    // filters don't need a composite index (unlike equality + orderBy on a different field).
+    public void findPotentialMatches(String category, String oppositeStatus, String excludeOwnerId,
+                                      FirestoreListCallback<Item> callback) {
+        db.collection("items")
+                .whereEqualTo("category", category)
+                .whereEqualTo("status", oppositeStatus)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    List<Item> matches = new ArrayList<>();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        Item item = doc.toObject(Item.class);
+                        item.setId(doc.getId());
+                        if (!item.isResolved() && !item.getOwnerId().equals(excludeOwnerId)) {
+                            matches.add(item);
+                        }
+                    }
+                    callback.onChanged(matches);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
     // Firestore has no native "contains" query, so this fetches once and filters client-side.
     public void searchItems(@Nullable String query, @Nullable String status, @Nullable String category,
                              FirestoreListCallback<Item> callback) {
