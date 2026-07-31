@@ -1,11 +1,15 @@
 package com.mobdeve.s17.grp2.archerfind;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -90,6 +94,23 @@ public class ItemDetailFragment extends Fragment {
         FirebaseUser currentUser = authRepository.getCurrentUser();
         boolean isOwner = currentUser != null && currentUser.getUid().equals(item.getOwnerId());
         claimButton.setVisibility(isOwner || item.isResolved() ? View.GONE : View.VISIBLE);
+
+        MaterialButton mapButton = view.findViewById(R.id.btn_view_on_map);
+        if (item.hasLocation()) {
+            mapButton.setVisibility(View.VISIBLE);
+            mapButton.setOnClickListener(v -> {
+                String uri = String.format(Locale.US, "geo:%f,%f?q=%f,%f(%s)",
+                        item.getLatitude(), item.getLongitude(), item.getLatitude(), item.getLongitude(), item.getTitle());
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+                if (intent.resolveActivity(requireContext().getPackageManager()) != null) {
+                    startActivity(intent);
+                } else {
+                    Snackbar.make(view, "No map app available to open this location.", Snackbar.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            mapButton.setVisibility(View.GONE);
+        }
     }
 
     private void onClaimClicked(View view, MaterialButton claimButton) {

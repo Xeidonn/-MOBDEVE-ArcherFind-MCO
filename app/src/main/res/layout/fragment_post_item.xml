@@ -115,13 +115,22 @@
                 android:hint="Location (e.g. Gokongwei 2F)" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Static map placeholder -->
-        <ImageView
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_use_current_location"
             android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:src="@drawable/placeholder_map"
-            android:layout_marginTop="16dp"
-            android:contentDescription="Map location" />
+            android:layout_height="wrap_content"
+            android:text="Use Current Location"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        <TextView
+            android:id="@+id/tv_location_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textColor="#757575"
+            android:gravity="center"
+            android:layout_marginTop="4dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_submit_post"

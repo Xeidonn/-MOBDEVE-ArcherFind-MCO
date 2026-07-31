@@ -79,13 +79,14 @@
                 android:textSize="14sp"
                 android:layout_marginTop="4dp" />
 
-            <!-- Map placeholder -->
-            <ImageView
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_view_on_map"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:src="@drawable/placeholder_map"
+                android:layout_height="wrap_content"
+                android:text="View on Map"
                 android:layout_marginTop="16dp"
-                android:contentDescription="Map location" />
+                android:visibility="gone"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_claim"

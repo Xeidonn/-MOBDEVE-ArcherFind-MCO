@@ -1,6 +1,12 @@
 package com.mobdeve.s17.grp2.archerfind;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,16 +16,22 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -29,6 +41,8 @@ import com.google.firebase.auth.FirebaseUser;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -43,10 +57,25 @@ public abstract class PostItemFragmentBase extends Fragment {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private Uri selectedPhotoUri;
+    private Double selectedLatitude;
+    private Double selectedLongitude;
+    private FusedLocationProviderClient fusedLocationClient;
 
     private final ActivityResultLauncher<PickVisualMediaRequest> photoPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri != null) onPhotoPicked(uri);
+            });
+
+    private final ActivityResultLauncher<String> locationPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) {
+                    fetchCurrentLocation();
+                } else {
+                    View root = getView();
+                    if (root != null) {
+                        Snackbar.make(root, "Location permission is needed to use your current location.", Snackbar.LENGTH_LONG).show();
+                    }
+                }
             });
 
     protected abstract String getStatus();
@@ -81,8 +110,74 @@ public abstract class PostItemFragmentBase extends Fragment {
                         .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                         .build()));
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+        view.findViewById(R.id.btn_use_current_location).setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED) {
+                fetchCurrentLocation();
+            } else {
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+        });
+
         btnSubmit.setOnClickListener(v ->
                 submitItem(view, etTitle, etDescription, etLocation, categoryField, btnSubmit));
+    }
+
+    @SuppressLint("MissingPermission") // only called after an explicit permission check/grant
+    private void fetchCurrentLocation() {
+        View root = getView();
+        if (root == null) return;
+        TextView statusView = root.findViewById(R.id.tv_location_status);
+        statusView.setText("Detecting location...");
+
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, new CancellationTokenSource().getToken())
+                .addOnSuccessListener(location -> {
+                    if (!isAdded()) return;
+                    if (location == null) {
+                        statusView.setText("Couldn't detect your location. Try again outdoors or with location enabled.");
+                        return;
+                    }
+                    selectedLatitude = location.getLatitude();
+                    selectedLongitude = location.getLongitude();
+                    reverseGeocode(location.getLatitude(), location.getLongitude());
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    statusView.setText("Couldn't detect location: " + e.getMessage());
+                });
+    }
+
+    private void reverseGeocode(double latitude, double longitude) {
+        Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+        if (Build.VERSION.SDK_INT >= 33) {
+            geocoder.getFromLocation(latitude, longitude, 1, addresses -> mainHandler.post(() -> onAddressResolved(addresses)));
+        } else {
+            ioExecutor.execute(() -> {
+                List<Address> addresses = null;
+                try {
+                    addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                } catch (IOException ignored) {
+                    // No connectivity or geocoder unavailable — fall back to raw coordinates below.
+                }
+                List<Address> result = addresses;
+                mainHandler.post(() -> onAddressResolved(result));
+            });
+        }
+    }
+
+    private void onAddressResolved(@Nullable List<Address> addresses) {
+        if (!isAdded() || selectedLatitude == null || selectedLongitude == null) return;
+        View root = getView();
+        if (root == null) return;
+
+        TextView statusView = root.findViewById(R.id.tv_location_status);
+        statusView.setText(String.format(Locale.getDefault(), "📍 %.5f, %.5f", selectedLatitude, selectedLongitude));
+
+        if (addresses != null && !addresses.isEmpty() && addresses.get(0).getMaxAddressLineIndex() >= 0) {
+            TextInputEditText etLocation = root.findViewById(R.id.et_post_location);
+            etLocation.setText(addresses.get(0).getAddressLine(0));
+        }
     }
 
     private void onPhotoPicked(Uri uri) {
@@ -129,6 +224,10 @@ public abstract class PostItemFragmentBase extends Fragment {
         if (ownerName == null || ownerName.isEmpty()) ownerName = user.getEmail();
 
         Item item = new Item(title, description, location, category, getStatus(), user.getUid(), ownerName);
+        if (selectedLatitude != null && selectedLongitude != null) {
+            item.setLatitude(selectedLatitude);
+            item.setLongitude(selectedLongitude);
+        }
         btnSubmit.setEnabled(false);
 
         if (selectedPhotoUri == null) {
