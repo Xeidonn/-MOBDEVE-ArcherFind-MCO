@@ -49,9 +49,10 @@ public class SearchFilterFragment extends Fragment {
         rv.setAdapter(adapter);
 
         TextInputEditText etSearch = view.findViewById(R.id.et_search);
+        TextInputEditText etLocationFilter = view.findViewById(R.id.et_location_filter);
         ChipGroup chipGroup = view.findViewById(R.id.chip_group_filters);
 
-        etSearch.addTextChangedListener(new TextWatcher() {
+        TextWatcher rerunOnChange = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -60,16 +61,19 @@ public class SearchFilterFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                runSearch(view, etSearch, chipGroup);
+                runSearch(view, etSearch, etLocationFilter, chipGroup);
             }
-        });
-        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> runSearch(view, etSearch, chipGroup));
+        };
+        etSearch.addTextChangedListener(rerunOnChange);
+        etLocationFilter.addTextChangedListener(rerunOnChange);
+        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> runSearch(view, etSearch, etLocationFilter, chipGroup));
 
-        runSearch(view, etSearch, chipGroup);
+        runSearch(view, etSearch, etLocationFilter, chipGroup);
     }
 
-    private void runSearch(View view, TextInputEditText etSearch, ChipGroup chipGroup) {
+    private void runSearch(View view, TextInputEditText etSearch, TextInputEditText etLocationFilter, ChipGroup chipGroup) {
         String query = etSearch.getText() != null ? etSearch.getText().toString() : "";
+        String locationFilter = etLocationFilter.getText() != null ? etLocationFilter.getText().toString().trim().toLowerCase() : "";
         String status = null;
         String category = null;
         boolean todayOnly = false;
@@ -87,7 +91,11 @@ public class SearchFilterFragment extends Fragment {
             @Override
             public void onChanged(List<Item> items) {
                 if (!isAdded()) return;
-                List<Item> active = items.stream().filter(item -> !item.isResolved()).collect(Collectors.toList());
+                List<Item> active = items.stream()
+                        .filter(item -> !item.isResolved())
+                        .filter(item -> locationFilter.isEmpty()
+                                || (item.getLocation() != null && item.getLocation().toLowerCase().contains(locationFilter)))
+                        .collect(Collectors.toList());
                 List<Item> results = finalTodayOnly ? filterToday(active) : active;
                 adapter.setItems(results);
                 view.findViewById(R.id.tv_search_empty).setVisibility(results.isEmpty() ? View.VISIBLE : View.GONE);
