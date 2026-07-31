@@ -9,17 +9,23 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.ListenerRegistration;
 
 public class ItemDetailFragment extends Fragment {
 
@@ -27,6 +33,8 @@ public class ItemDetailFragment extends Fragment {
     private final AuthRepository authRepository = new AuthRepository();
     private final ChatRepository chatRepository = new ChatRepository();
     private final NotificationRepository notificationRepository = new NotificationRepository();
+    private final CommentRepository commentRepository = new CommentRepository();
+    private ListenerRegistration commentsListener;
     private Item currentItem;
 
     @Nullable
@@ -50,6 +58,8 @@ public class ItemDetailFragment extends Fragment {
             Snackbar.make(view, "Item not found.", Snackbar.LENGTH_LONG).show();
             return;
         }
+
+        setupComments(view, itemId);
 
         itemRepository.getItem(itemId, new FirestoreCallback<Item>() {
             @Override
@@ -110,6 +120,73 @@ public class ItemDetailFragment extends Fragment {
             });
         } else {
             mapButton.setVisibility(View.GONE);
+        }
+    }
+
+    private void setupComments(View view, String itemId) {
+        RecyclerView rv = view.findViewById(R.id.rv_comments);
+        rv.setLayoutManager(new LinearLayoutManager(getContext()));
+        CommentAdapter adapter = new CommentAdapter(new ArrayList<>());
+        rv.setAdapter(adapter);
+        TextView emptyState = view.findViewById(R.id.tv_comments_empty);
+
+        commentsListener = commentRepository.listenForItem(itemId, new FirestoreListCallback<Comment>() {
+            @Override
+            public void onChanged(List<Comment> comments) {
+                if (!isAdded()) return;
+                adapter.setItems(comments);
+                emptyState.setVisibility(comments.isEmpty() ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                Snackbar.make(view, "Failed to load comments: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            }
+        });
+
+        TextInputEditText etComment = view.findViewById(R.id.et_comment);
+        view.findViewById(R.id.btn_post_comment).setOnClickListener(v -> {
+            String text = etComment.getText() != null ? etComment.getText().toString().trim() : "";
+            if (text.isEmpty()) return;
+
+            FirebaseUser user = authRepository.getCurrentUser();
+            if (user == null) return;
+
+            String authorName = user.getDisplayName() != null ? user.getDisplayName() : user.getEmail();
+            etComment.setText("");
+            commentRepository.addComment(new Comment(itemId, user.getUid(), authorName, text), new FirestoreVoidCallback() {
+                @Override
+                public void onSuccess() {
+                    if (!isAdded() || currentItem == null || currentItem.getOwnerId().equals(user.getUid())) return;
+                    NotificationItem notification = new NotificationItem(currentItem.getOwnerId(),
+                            NotificationItem.TYPE_COMMENT, "New Comment",
+                            authorName + " commented on your '" + currentItem.getTitle() + "' posting.");
+                    notification.setRelatedItemId(itemId);
+                    notificationRepository.create(notification, new FirestoreVoidCallback() {
+                        @Override
+                        public void onSuccess() { /* best-effort */ }
+
+                        @Override
+                        public void onError(Exception e) { /* best-effort */ }
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    if (!isAdded()) return;
+                    Snackbar.make(view, "Failed to post comment: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+                }
+            });
+        });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (commentsListener != null) {
+            commentsListener.remove();
+            commentsListener = null;
         }
     }
 

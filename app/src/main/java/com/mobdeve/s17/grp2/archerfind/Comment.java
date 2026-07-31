@@ -1,5 +1,6 @@
 package com.mobdeve.s17.grp2.archerfind;
 
+import com.google.firebase.firestore.Exclude;
 import com.google.firebase.firestore.ServerTimestamp;
 
 import java.util.Date;
@@ -41,4 +42,17 @@ public class Comment {
 
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    @Exclude
+    public String getRelativeTime() {
+        if (createdAt == null) return "";
+        long diffMs = System.currentTimeMillis() - createdAt.getTime();
+        long minutes = diffMs / (60 * 1000);
+        if (minutes < 1) return "Just now";
+        if (minutes < 60) return minutes + "m ago";
+        long hours = minutes / 60;
+        if (hours < 24) return hours + "h ago";
+        long days = hours / 24;
+        return days + "d ago";
+    }
 }
