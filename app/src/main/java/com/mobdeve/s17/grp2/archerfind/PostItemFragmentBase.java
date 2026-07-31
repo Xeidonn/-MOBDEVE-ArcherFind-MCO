@@ -49,8 +49,10 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// Post Lost Item and Post Found Item are identical apart from the status they
-// write and their toolbar copy, so the shared form logic lives here once.
+// Post Lost Item, Post Found Item, and Edit Listing are identical forms apart from
+// the status they write and their toolbar copy, so the shared logic lives here once.
+// Edit mode is opted into by overriding getEditingItemId(): when non-null, the form
+// is pre-filled from the existing item and submit updates it instead of creating one.
 public abstract class PostItemFragmentBase extends Fragment {
 
     protected final ItemRepository itemRepository = new ItemRepository();
@@ -63,6 +65,7 @@ public abstract class PostItemFragmentBase extends Fragment {
     private Double selectedLatitude;
     private Double selectedLongitude;
     private FusedLocationProviderClient fusedLocationClient;
+    private Item editingItem;
 
     private final ActivityResultLauncher<PickVisualMediaRequest> photoPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
@@ -84,6 +87,12 @@ public abstract class PostItemFragmentBase extends Fragment {
     protected abstract String getStatus();
     protected abstract String getToolbarTitle();
     protected abstract String getSuccessMessage();
+
+    // Overridden by EditItemFragment to opt into edit mode.
+    @Nullable
+    protected String getEditingItemId() {
+        return null;
+    }
 
     @Nullable
     @Override
@@ -141,6 +150,47 @@ public abstract class PostItemFragmentBase extends Fragment {
 
         btnSubmit.setOnClickListener(v ->
                 submitItem(view, etTitle, etDescription, etLocation, categoryField, btnSubmit));
+
+        String editingItemId = getEditingItemId();
+        if (editingItemId != null) {
+            loadItemForEditing(view, editingItemId, etTitle, etDescription, etLocation, categoryField, btnSubmit);
+        }
+    }
+
+    private void loadItemForEditing(View view, String itemId, TextInputEditText etTitle, TextInputEditText etDescription,
+                                     TextInputEditText etLocation, AutoCompleteTextView categoryField, MaterialButton btnSubmit) {
+        btnSubmit.setEnabled(false);
+        btnSubmit.setText("Loading...");
+
+        itemRepository.getItem(itemId, new FirestoreCallback<Item>() {
+            @Override
+            public void onSuccess(Item item) {
+                if (!isAdded()) return;
+                editingItem = item;
+                etTitle.setText(item.getTitle());
+                etDescription.setText(item.getDescription());
+                etLocation.setText(item.getLocation());
+                categoryField.setText(item.getCategory(), false);
+                if (item.hasLocation()) {
+                    selectedLatitude = item.getLatitude();
+                    selectedLongitude = item.getLongitude();
+                }
+                if (item.getPhotoUrl() != null) {
+                    ImageView preview = view.findViewById(R.id.iv_photo_preview);
+                    Glide.with(PostItemFragmentBase.this).load(item.getPhotoUrl()).into(preview);
+                    preview.setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.photo_hint).setVisibility(View.GONE);
+                }
+                btnSubmit.setText("Save Changes");
+                btnSubmit.setEnabled(true);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                Snackbar.make(view, "Failed to load item: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            }
+        });
     }
 
     @SuppressLint("MissingPermission") // only called after an explicit permission check/grant
@@ -239,6 +289,22 @@ public abstract class PostItemFragmentBase extends Fragment {
             Snackbar.make(view, "You must be logged in to post an item.", Snackbar.LENGTH_LONG).show();
             return;
         }
+
+        btnSubmit.setEnabled(false);
+
+        if (editingItem != null) {
+            editingItem.setTitle(title);
+            editingItem.setDescription(description);
+            editingItem.setLocation(location);
+            editingItem.setCategory(category);
+            if (selectedLatitude != null && selectedLongitude != null) {
+                editingItem.setLatitude(selectedLatitude);
+                editingItem.setLongitude(selectedLongitude);
+            }
+            saveWithOptionalPhoto(view, editingItem, btnSubmit, () -> updateItem(view, editingItem, btnSubmit));
+            return;
+        }
+
         String ownerName = user.getDisplayName();
         if (ownerName == null || ownerName.isEmpty()) ownerName = user.getEmail();
 
@@ -247,16 +313,18 @@ public abstract class PostItemFragmentBase extends Fragment {
             item.setLatitude(selectedLatitude);
             item.setLongitude(selectedLongitude);
         }
-        btnSubmit.setEnabled(false);
+        saveWithOptionalPhoto(view, item, btnSubmit, () -> createItem(view, item, btnSubmit));
+    }
 
+    private void saveWithOptionalPhoto(View view, Item item, MaterialButton btnSubmit, Runnable onReadyToSave) {
         if (selectedPhotoUri == null) {
-            createItem(view, item, btnSubmit);
+            onReadyToSave.run();
         } else {
-            uploadPhotoThenCreateItem(view, item, btnSubmit, selectedPhotoUri);
+            uploadPhotoThenRun(view, item, btnSubmit, selectedPhotoUri, onReadyToSave);
         }
     }
 
-    private void uploadPhotoThenCreateItem(View view, Item item, MaterialButton btnSubmit, Uri photoUri) {
+    private void uploadPhotoThenRun(View view, Item item, MaterialButton btnSubmit, Uri photoUri, Runnable onReadyToSave) {
         String mimeType = requireContext().getContentResolver().getType(photoUri);
         ioExecutor.execute(() -> {
             byte[] bytes;
@@ -281,7 +349,7 @@ public abstract class PostItemFragmentBase extends Fragment {
                 public void onSuccess(String photoUrl) {
                     if (!isAdded()) return;
                     item.setPhotoUrl(photoUrl);
-                    createItem(view, item, btnSubmit);
+                    onReadyToSave.run();
                 }
 
                 @Override
@@ -308,6 +376,24 @@ public abstract class PostItemFragmentBase extends Fragment {
                 if (!isAdded()) return;
                 btnSubmit.setEnabled(true);
                 Snackbar.make(view, "Failed to post item: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void updateItem(View view, Item item, MaterialButton btnSubmit) {
+        itemRepository.updateItem(item, new FirestoreVoidCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                Snackbar.make(view, "Listing updated!", Snackbar.LENGTH_SHORT).show();
+                Navigation.findNavController(view).navigateUp();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                btnSubmit.setEnabled(true);
+                Snackbar.make(view, "Failed to update item: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
             }
         });
     }

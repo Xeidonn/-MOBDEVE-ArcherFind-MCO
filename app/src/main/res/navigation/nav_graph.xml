@@ -133,7 +133,22 @@
         android:id="@+id/manageListingsFragment"
         android:name="com.mobdeve.s17.grp2.archerfind.ManageListingsFragment"
         android:label="My Listings"
-        tools:layout="@layout/fragment_manage_listings" />
+        tools:layout="@layout/fragment_manage_listings">
+        <action
+            android:id="@+id/action_manageListings_to_editItem"
+            app:destination="@id/editItemFragment" />
+    </fragment>
+
+    <!-- Edit Listing screen -->
+    <fragment
+        android:id="@+id/editItemFragment"
+        android:name="com.mobdeve.s17.grp2.archerfind.EditItemFragment"
+        android:label="Edit Listing"
+        tools:layout="@layout/fragment_post_item">
+        <argument
+            android:name="itemId"
+            app:argType="string" />
+    </fragment>
 
     <!-- Chats list (bottom nav tab) -->
     <fragment

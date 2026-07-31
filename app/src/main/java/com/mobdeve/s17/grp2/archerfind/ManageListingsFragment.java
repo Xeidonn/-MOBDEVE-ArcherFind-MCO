@@ -46,8 +46,9 @@ public class ManageListingsFragment extends Fragment {
         adapter = new ManageItemAdapter(new ArrayList<>(), new ManageItemAdapter.OnActionListener() {
             @Override
             public void onEdit(Item item) {
-                // Editing is not implemented yet; there is no dedicated edit screen.
-                Snackbar.make(view, "Editing isn't available yet.", Snackbar.LENGTH_SHORT).show();
+                Bundle bundle = new Bundle();
+                bundle.putString("itemId", item.getId());
+                Navigation.findNavController(view).navigate(R.id.action_manageListings_to_editItem, bundle);
             }
 
             @Override
