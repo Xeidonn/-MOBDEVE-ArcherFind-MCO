@@ -21,6 +21,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SearchFilterFragment extends Fragment {
 
@@ -86,7 +87,8 @@ public class SearchFilterFragment extends Fragment {
             @Override
             public void onChanged(List<Item> items) {
                 if (!isAdded()) return;
-                List<Item> results = finalTodayOnly ? filterToday(items) : items;
+                List<Item> active = items.stream().filter(item -> !item.isResolved()).collect(Collectors.toList());
+                List<Item> results = finalTodayOnly ? filterToday(active) : active;
                 adapter.setItems(results);
                 view.findViewById(R.id.tv_search_empty).setVisibility(results.isEmpty() ? View.VISIBLE : View.GONE);
             }

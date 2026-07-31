@@ -20,6 +20,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class HomeFragment extends Fragment {
 
@@ -78,8 +79,11 @@ public class HomeFragment extends Fragment {
             @Override
             public void onChanged(List<Item> items) {
                 if (!isAdded()) return;
-                adapter.setItems(items);
-                view.findViewById(R.id.tv_home_empty).setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+                // Resolved items stay visible on Manage Listings (for the owner) but
+                // shouldn't clutter the public feed once they're no longer active.
+                List<Item> active = items.stream().filter(item -> !item.isResolved()).collect(Collectors.toList());
+                adapter.setItems(active);
+                view.findViewById(R.id.tv_home_empty).setVisibility(active.isEmpty() ? View.VISIBLE : View.GONE);
             }
 
             @Override
