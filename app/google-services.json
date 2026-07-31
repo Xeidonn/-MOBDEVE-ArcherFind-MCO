@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "509309782115",
+    "project_id": "archerfind-f69d5",
+    "storage_bucket": "archerfind-f69d5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:509309782115:android:0ad94548577b0d3e5c5056",
+        "android_client_info": {
+          "package_name": "com.mobdeve.s17.grp2.archerfind"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGDgEuSRSVS23v4HhtKwkSNvubVA53Eeo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
