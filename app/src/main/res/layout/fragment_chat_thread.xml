@@ -24,6 +24,15 @@
         android:paddingVertical="8dp"
         android:clipToPadding="false" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_reveal_photo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:text="Reveal Original Photo to Claimant"
+        android:visibility="gone"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -53,6 +53,20 @@ public class ChatRepository {
                 .addOnFailureListener(callback::onError);
     }
 
+    public void getThread(String threadId, FirestoreCallback<ChatThread> callback) {
+        db.collection("chatThreads").document(threadId).get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        callback.onError(new IllegalArgumentException("Thread not found"));
+                        return;
+                    }
+                    ChatThread thread = doc.toObject(ChatThread.class);
+                    thread.setId(doc.getId());
+                    callback.onSuccess(thread);
+                })
+                .addOnFailureListener(callback::onError);
+    }
+
     public ListenerRegistration listenThreadsForUser(String userId, FirestoreListCallback<ChatThread> callback) {
         return db.collection("chatThreads")
                 .whereArrayContains("participantIds", userId)

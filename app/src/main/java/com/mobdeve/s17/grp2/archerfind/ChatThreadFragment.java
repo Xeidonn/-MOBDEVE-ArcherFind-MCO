@@ -26,6 +26,7 @@ public class ChatThreadFragment extends Fragment {
 
     private final AuthRepository authRepository = new AuthRepository();
     private final ChatRepository chatRepository = new ChatRepository();
+    private final ItemRepository itemRepository = new ItemRepository();
     private ListenerRegistration messagesListener;
     private String threadId;
 
@@ -88,6 +89,51 @@ public class ChatThreadFragment extends Fragment {
                     Snackbar.make(view, "Failed to send: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
                 }
             });
+        });
+
+        setupRevealPhotoButton(view, user.getUid());
+    }
+
+    // Only the item's original poster can reveal the unblurred photo, and only
+    // once we know which item this thread is about (fetched via the thread doc).
+    private void setupRevealPhotoButton(View view, String currentUserId) {
+        MaterialButton revealButton = view.findViewById(R.id.btn_reveal_photo);
+        chatRepository.getThread(threadId, new FirestoreCallback<ChatThread>() {
+            @Override
+            public void onSuccess(ChatThread thread) {
+                if (!isAdded() || thread.getItemId() == null) return;
+                itemRepository.getItem(thread.getItemId(), new FirestoreCallback<Item>() {
+                    @Override
+                    public void onSuccess(Item item) {
+                        if (!isAdded() || !currentUserId.equals(item.getOwnerId()) || item.getPhotoUrl() == null) return;
+                        revealButton.setVisibility(View.VISIBLE);
+                        revealButton.setOnClickListener(v -> {
+                            revealButton.setEnabled(false);
+                            Message message = new Message(currentUserId, "📷 Shared the original photo for verification");
+                            message.setRevealPhotoUrl(item.getPhotoUrl());
+                            chatRepository.sendMessage(threadId, message, new FirestoreVoidCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    if (isAdded()) revealButton.setVisibility(View.GONE);
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    if (!isAdded()) return;
+                                    revealButton.setEnabled(true);
+                                    Snackbar.make(view, "Failed to reveal photo: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+                                }
+                            });
+                        });
+                    }
+
+                    @Override
+                    public void onError(Exception e) { /* item may have been deleted since; just skip the button */ }
+                });
+            }
+
+            @Override
+            public void onError(Exception e) { /* skip the button if the thread lookup fails */ }
         });
     }
 

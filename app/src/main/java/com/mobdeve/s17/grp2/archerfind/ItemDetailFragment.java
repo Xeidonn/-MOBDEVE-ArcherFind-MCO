@@ -20,7 +20,11 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.graphics.drawable.Drawable;
+
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -79,12 +83,16 @@ public class ItemDetailFragment extends Fragment {
 
     private void bindItem(View view, Item item, MaterialButton claimButton) {
         ImageView photo = view.findViewById(R.id.iv_detail_photo);
-        Glide.with(photo.getContext())
+        FirebaseUser viewerForPhoto = authRepository.getCurrentUser();
+        boolean isPhotoOwner = viewerForPhoto != null && viewerForPhoto.getUid().equals(item.getOwnerId());
+        RequestBuilder<Drawable> photoRequest = Glide.with(photo.getContext())
                 .load(item.getPhotoUrl())
                 .placeholder(R.drawable.placeholder_image)
-                .error(R.drawable.placeholder_image)
-                .centerCrop()
-                .into(photo);
+                .error(R.drawable.placeholder_image);
+        photoRequest = isPhotoOwner
+                ? photoRequest.transform(new CenterCrop())
+                : photoRequest.transform(new CenterCrop(), new BlurTransformation());
+        photoRequest.into(photo);
 
         ((TextView) view.findViewById(R.id.tv_detail_title)).setText(item.getTitle());
         ((TextView) view.findViewById(R.id.tv_detail_description)).setText(item.getDescription());

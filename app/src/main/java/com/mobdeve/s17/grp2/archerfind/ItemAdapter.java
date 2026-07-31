@@ -1,5 +1,6 @@
 package com.mobdeve.s17.grp2.archerfind;
 
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,10 +9,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.google.firebase.auth.FirebaseUser;
 import java.util.List;
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
 
+    private final AuthRepository authRepository = new AuthRepository();
     private List<Item> items;
     private OnItemClickListener listener;
 
@@ -43,12 +48,17 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
         holder.location.setText(item.getLocation());
         holder.date.setText(item.getFormattedDate());
         holder.status.setText(item.getStatus());
-        Glide.with(holder.thumb.getContext())
+
+        FirebaseUser currentUser = authRepository.getCurrentUser();
+        boolean isOwner = currentUser != null && currentUser.getUid().equals(item.getOwnerId());
+        RequestBuilder<Drawable> request = Glide.with(holder.thumb.getContext())
                 .load(item.getPhotoUrl())
                 .placeholder(R.drawable.placeholder_image)
-                .error(R.drawable.placeholder_image)
-                .centerCrop()
-                .into(holder.thumb);
+                .error(R.drawable.placeholder_image);
+        request = isOwner
+                ? request.transform(new CenterCrop())
+                : request.transform(new CenterCrop(), new BlurTransformation());
+        request.into(holder.thumb);
 
         if (item.getStatus().equals("Lost")) {
             holder.status.setBackgroundResource(R.color.badge_lost);
