@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class AuthRepository {
 
@@ -66,5 +67,12 @@ public class AuthRepository {
 
     public void logout() {
         auth.signOut();
+    }
+
+    // Best-effort: registers this device's current push token against the signed-in
+    // user so a future server-side sender (e.g. a Cloud Function) could target them.
+    public void saveFcmToken(String uid) {
+        FirebaseMessaging.getInstance().getToken().addOnSuccessListener(token ->
+                db.collection("users").document(uid).update("fcmToken", token));
     }
 }

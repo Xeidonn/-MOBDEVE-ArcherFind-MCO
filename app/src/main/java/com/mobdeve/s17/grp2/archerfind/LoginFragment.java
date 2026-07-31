@@ -51,6 +51,7 @@ public class LoginFragment extends Fragment {
                 @Override
                 public void onSuccess(com.google.firebase.auth.FirebaseUser user) {
                     if (!isAdded()) return;
+                    authRepository.saveFcmToken(user.getUid());
                     Navigation.findNavController(view).navigate(R.id.action_login_to_home);
                 }
 
