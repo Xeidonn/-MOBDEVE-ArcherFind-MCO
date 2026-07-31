@@ -5,13 +5,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseUser;
 
 public class ItemDetailFragment extends Fragment {
+
+    private final ItemRepository itemRepository = new ItemRepository();
+    private final AuthRepository authRepository = new AuthRepository();
 
     @Nullable
     @Override
@@ -23,18 +30,52 @@ public class ItemDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Display the item title passed via navigation args
-        if (getArguments() != null) {
-            String title = getArguments().getString("itemTitle", "Lost Item");
-            ((TextView) view.findViewById(R.id.tv_detail_title)).setText(title);
-        }
-
-        // Toolbar back button
         view.findViewById(R.id.toolbar_detail).setOnClickListener(v ->
                 Navigation.findNavController(v).navigateUp());
 
-        // Claim button shows Snackbar feedback (UI only)
-        view.findViewById(R.id.btn_claim).setOnClickListener(v ->
+        MaterialButton claimButton = view.findViewById(R.id.btn_claim);
+        claimButton.setOnClickListener(v ->
                 Snackbar.make(v, "Claim request submitted!", Snackbar.LENGTH_SHORT).show());
+
+        String itemId = getArguments() != null ? getArguments().getString("itemId") : null;
+        if (itemId == null) {
+            Snackbar.make(view, "Item not found.", Snackbar.LENGTH_LONG).show();
+            return;
+        }
+
+        itemRepository.getItem(itemId, new FirestoreCallback<Item>() {
+            @Override
+            public void onSuccess(Item item) {
+                if (!isAdded()) return;
+                bindItem(view, item, claimButton);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                Snackbar.make(view, "Failed to load item: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void bindItem(View view, Item item, MaterialButton claimButton) {
+        ((TextView) view.findViewById(R.id.tv_detail_title)).setText(item.getTitle());
+        ((TextView) view.findViewById(R.id.tv_detail_description)).setText(item.getDescription());
+        ((TextView) view.findViewById(R.id.tv_detail_location)).setText("📍 " + item.getLocation());
+        ((TextView) view.findViewById(R.id.tv_detail_date)).setText("📅 " + item.getFormattedDate());
+
+        TextView statusView = view.findViewById(R.id.tv_detail_status);
+        if (item.isResolved()) {
+            statusView.setText("Resolved");
+            statusView.setBackgroundResource(R.color.badge_found);
+        } else {
+            statusView.setText(item.getStatus());
+            statusView.setBackgroundResource(
+                    "Lost".equals(item.getStatus()) ? R.color.badge_lost : R.color.badge_found);
+        }
+
+        FirebaseUser currentUser = authRepository.getCurrentUser();
+        boolean isOwner = currentUser != null && currentUser.getUid().equals(item.getOwnerId());
+        claimButton.setVisibility(isOwner || item.isResolved() ? View.GONE : View.VISIBLE);
     }
 }

@@ -38,30 +38,35 @@
         app:singleSelection="false">
 
         <com.google.android.material.chip.Chip
+            android:id="@+id/chip_lost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Lost"
             style="@style/Widget.MaterialComponents.Chip.Filter" />
 
         <com.google.android.material.chip.Chip
+            android:id="@+id/chip_found"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Found"
             style="@style/Widget.MaterialComponents.Chip.Filter" />
 
         <com.google.android.material.chip.Chip
+            android:id="@+id/chip_electronics"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Electronics"
             style="@style/Widget.MaterialComponents.Chip.Filter" />
 
         <com.google.android.material.chip.Chip
+            android:id="@+id/chip_personal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Personal"
             style="@style/Widget.MaterialComponents.Chip.Filter" />
 
         <com.google.android.material.chip.Chip
+            android:id="@+id/chip_today"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Today"

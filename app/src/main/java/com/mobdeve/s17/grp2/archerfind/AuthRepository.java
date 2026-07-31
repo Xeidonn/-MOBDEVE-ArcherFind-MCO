@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class AuthRepository {
@@ -33,6 +34,10 @@ public class AuthRepository {
                         callback.onError("Registration failed. Please try again.");
                         return;
                     }
+                    // Stored on the FirebaseUser itself too, so callers can read the poster's
+                    // name synchronously (e.g. when creating an item) without a Firestore round trip.
+                    user.updateProfile(new UserProfileChangeRequest.Builder().setDisplayName(fullName).build());
+
                     UserProfile profile = new UserProfile(user.getUid(), fullName, email, studentId);
                     db.collection("users").document(user.getUid()).set(profile)
                             .addOnSuccessListener(unused -> callback.onSuccess(user))

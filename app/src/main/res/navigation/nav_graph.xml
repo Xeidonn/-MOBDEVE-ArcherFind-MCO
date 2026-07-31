@@ -65,9 +65,8 @@
         android:label="Item Details"
         tools:layout="@layout/fragment_item_detail">
         <argument
-            android:name="itemTitle"
-            app:argType="string"
-            android:defaultValue="Lost Item" />
+            android:name="itemId"
+            app:argType="string" />
     </fragment>
 
     <!-- Post Lost Item screen -->

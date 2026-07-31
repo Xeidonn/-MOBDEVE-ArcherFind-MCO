@@ -7,15 +7,27 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.android.material.snackbar.Snackbar;
 import java.util.List;
 
 public class ManageItemAdapter extends RecyclerView.Adapter<ManageItemAdapter.ViewHolder> {
 
-    private final List<Item> items;
+    private List<Item> items;
+    private final OnActionListener listener;
 
-    public ManageItemAdapter(List<Item> items) {
+    public interface OnActionListener {
+        void onEdit(Item item);
+        void onResolve(Item item);
+        void onDelete(Item item);
+    }
+
+    public ManageItemAdapter(List<Item> items, OnActionListener listener) {
         this.items = items;
+        this.listener = listener;
+    }
+
+    public void setItems(List<Item> items) {
+        this.items = items;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -29,18 +41,15 @@ public class ManageItemAdapter extends RecyclerView.Adapter<ManageItemAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Item item = items.get(position);
         holder.title.setText(item.getTitle());
-        holder.status.setText(item.getStatus());
+        holder.status.setText(item.isResolved() ? "Resolved" : item.getStatus());
         holder.thumb.setImageResource(R.drawable.placeholder_image);
 
-        // UI-only feedback via Snackbar
-        holder.itemView.findViewById(R.id.btn_edit).setOnClickListener(v ->
-                Snackbar.make(v, "Edit: " + item.getTitle(), Snackbar.LENGTH_SHORT).show());
+        holder.resolveButton.setEnabled(!item.isResolved());
+        holder.resolveButton.setText(item.isResolved() ? "Resolved" : "Resolve");
 
-        holder.itemView.findViewById(R.id.btn_resolve).setOnClickListener(v ->
-                Snackbar.make(v, "Marked as resolved: " + item.getTitle(), Snackbar.LENGTH_SHORT).show());
-
-        holder.itemView.findViewById(R.id.btn_delete).setOnClickListener(v ->
-                Snackbar.make(v, "Deleted: " + item.getTitle(), Snackbar.LENGTH_SHORT).show());
+        holder.editButton.setOnClickListener(v -> listener.onEdit(item));
+        holder.resolveButton.setOnClickListener(v -> listener.onResolve(item));
+        holder.deleteButton.setOnClickListener(v -> listener.onDelete(item));
     }
 
     @Override
@@ -51,12 +60,16 @@ public class ManageItemAdapter extends RecyclerView.Adapter<ManageItemAdapter.Vi
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView title, status;
         ImageView thumb;
+        com.google.android.material.button.MaterialButton editButton, resolveButton, deleteButton;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.tv_manage_title);
             status = itemView.findViewById(R.id.tv_manage_status);
             thumb = itemView.findViewById(R.id.iv_manage_thumb);
+            editButton = itemView.findViewById(R.id.btn_edit);
+            resolveButton = itemView.findViewById(R.id.btn_resolve);
+            deleteButton = itemView.findViewById(R.id.btn_delete);
         }
     }
 }

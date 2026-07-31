@@ -4,4 +4,11 @@
     <string name="nav_search">Search</string>
     <string name="nav_notifications">Notifications</string>
     <string name="nav_profile">Profile</string>
+
+    <string-array name="item_categories">
+        <item>Electronics</item>
+        <item>Personal</item>
+        <item>Documents</item>
+        <item>Others</item>
+    </string-array>
 </resources>
