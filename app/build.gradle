@@ -102,6 +102,10 @@ dependencies {
     // Provides com.google.common.util.concurrent.ListenableFuture (ProcessCameraProvider's
     // return type) — not resolving transitively through camera-lifecycle in this project.
     implementation 'androidx.concurrent:concurrent-futures:1.1.0'
+    // Full Guava was only reaching the runtime/packaging classpath transitively (hence the
+    // duplicate-class error once the listenablefuture shim was excluded, but a missing-symbol
+    // compile error before that): declare it directly so ListenableFuture is on both.
+    implementation 'com.google.guava:guava:32.1.3-android'
 
     // Google Maps + location (location tagging for lost/found items)
     implementation 'com.google.android.gms:play-services-maps:18.0.0'

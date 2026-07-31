@@ -23,6 +23,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavBackStackEntry;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -127,10 +129,11 @@ public class CameraCaptureFragment extends Fragment {
 
     private void onCaptureSaved(@Nullable Uri savedUri) {
         if (!isAdded()) return;
-        Navigation.findNavController(requireView())
-                .getPreviousBackStackEntry()
-                .getSavedStateHandle()
-                .set("captured_photo_uri", savedUri != null ? savedUri.toString() : null);
-        Navigation.findNavController(requireView()).navigateUp();
+        NavController navController = Navigation.findNavController(requireView());
+        NavBackStackEntry previousEntry = navController.getPreviousBackStackEntry();
+        if (previousEntry != null) {
+            previousEntry.getSavedStateHandle().set("captured_photo_uri", savedUri != null ? savedUri.toString() : null);
+        }
+        navController.navigateUp();
     }
 }

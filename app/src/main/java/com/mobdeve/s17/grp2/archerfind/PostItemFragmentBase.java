@@ -26,6 +26,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
+import androidx.navigation.NavBackStackEntry;
 import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
@@ -120,13 +121,13 @@ public abstract class PostItemFragmentBase extends Fragment {
                 })
                 .show());
 
-        MutableLiveData<String> capturedPhotoLiveData = Navigation.findNavController(view)
-                .getCurrentBackStackEntry()
-                .getSavedStateHandle()
-                .getLiveData("captured_photo_uri");
-        capturedPhotoLiveData.observe(getViewLifecycleOwner(), uriString -> {
-            if (uriString != null) onPhotoPicked(Uri.parse(uriString));
-        });
+        NavBackStackEntry currentEntry = Navigation.findNavController(view).getCurrentBackStackEntry();
+        if (currentEntry != null) {
+            MutableLiveData<String> capturedPhotoLiveData = currentEntry.getSavedStateHandle().getLiveData("captured_photo_uri");
+            capturedPhotoLiveData.observe(getViewLifecycleOwner(), uriString -> {
+                if (uriString != null) onPhotoPicked(Uri.parse(uriString));
+            });
+        }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
         view.findViewById(R.id.btn_use_current_location).setOnClickListener(v -> {
