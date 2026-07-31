@@ -15,15 +15,13 @@ if (localPropertiesFile.exists()) {
     localProperties.load(new FileInputStream(localPropertiesFile))
 }
 
-// Something in the dependency graph (Play Services/Firebase) pulls in
-// com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava — a
-// deliberately-empty placeholder with a huge fake version number. Gradle's default
-// highest-version-wins resolution picks that empty artifact over the real 1.0 shim
-// CameraX needs, silently deleting the ListenableFuture class. Force the real one.
+// Something in the dependency graph (Play Services/Firebase) already pulls in the
+// full com.google.guava:guava jar, which has its own real ListenableFuture class.
+// The standalone listenablefuture shim artifact (needed to satisfy other modules'
+// metadata) duplicates that same class, so exclude the shim everywhere and let
+// full Guava's copy be the only one on the classpath.
 configurations.all {
-    resolutionStrategy {
-        force 'com.google.guava:listenablefuture:1.0'
-    }
+    exclude group: 'com.google.guava', module: 'listenablefuture'
 }
 
 android {
