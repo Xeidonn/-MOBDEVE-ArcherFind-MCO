@@ -79,6 +79,7 @@ public class HomeFragment extends Fragment {
             public void onChanged(List<Item> items) {
                 if (!isAdded()) return;
                 adapter.setItems(items);
+                view.findViewById(R.id.tv_home_empty).setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
             }
 
             @Override

@@ -86,7 +86,9 @@ public class SearchFilterFragment extends Fragment {
             @Override
             public void onChanged(List<Item> items) {
                 if (!isAdded()) return;
-                adapter.setItems(finalTodayOnly ? filterToday(items) : items);
+                List<Item> results = finalTodayOnly ? filterToday(items) : items;
+                adapter.setItems(results);
+                view.findViewById(R.id.tv_search_empty).setVisibility(results.isEmpty() ? View.VISIBLE : View.GONE);
             }
 
             @Override
