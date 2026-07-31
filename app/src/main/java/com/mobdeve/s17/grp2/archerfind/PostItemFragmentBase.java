@@ -25,6 +25,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.navigation.Navigation;
 
 import com.bumptech.glide.Glide;
@@ -33,6 +34,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
@@ -105,10 +107,26 @@ public abstract class PostItemFragmentBase extends Fragment {
         String[] categories = getResources().getStringArray(R.array.item_categories);
         categoryField.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, categories));
 
-        view.findViewById(R.id.photo_picker).setOnClickListener(v -> photoPickerLauncher.launch(
-                new PickVisualMediaRequest.Builder()
-                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
-                        .build()));
+        view.findViewById(R.id.photo_picker).setOnClickListener(v -> new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Add a photo")
+                .setItems(new CharSequence[]{"Take Photo", "Choose from Gallery"}, (dialog, which) -> {
+                    if (which == 0) {
+                        Navigation.findNavController(v).navigate(R.id.action_global_cameraCapture);
+                    } else {
+                        photoPickerLauncher.launch(new PickVisualMediaRequest.Builder()
+                                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                                .build());
+                    }
+                })
+                .show());
+
+        MutableLiveData<String> capturedPhotoLiveData = Navigation.findNavController(view)
+                .getCurrentBackStackEntry()
+                .getSavedStateHandle()
+                .getLiveData("captured_photo_uri");
+        capturedPhotoLiveData.observe(getViewLifecycleOwner(), uriString -> {
+            if (uriString != null) onPhotoPicked(Uri.parse(uriString));
+        });
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
         view.findViewById(R.id.btn_use_current_location).setOnClickListener(v -> {

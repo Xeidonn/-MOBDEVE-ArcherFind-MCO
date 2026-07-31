@@ -6,6 +6,11 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/loginFragment">
 
+    <!-- Reachable from any destination -->
+    <action
+        android:id="@+id/action_global_cameraCapture"
+        app:destination="@id/cameraCaptureFragment" />
+
     <!-- Login screen: start destination -->
     <fragment
         android:id="@+id/loginFragment"
@@ -155,5 +160,12 @@
             app:argType="string"
             android:defaultValue="Chat" />
     </fragment>
+
+    <!-- In-app camera capture (CameraX preview + shutter, not the system Camera app) -->
+    <fragment
+        android:id="@+id/cameraCaptureFragment"
+        android:name="com.mobdeve.s17.grp2.archerfind.CameraCaptureFragment"
+        android:label="Camera"
+        tools:layout="@layout/fragment_camera_capture" />
 
 </navigation>
