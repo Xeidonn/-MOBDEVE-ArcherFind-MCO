@@ -90,6 +90,9 @@ dependencies {
     implementation 'androidx.camera:camera-camera2:1.4.1'
     implementation 'androidx.camera:camera-lifecycle:1.4.1'
     implementation 'androidx.camera:camera-view:1.4.1'
+    // Provides com.google.common.util.concurrent.ListenableFuture (ProcessCameraProvider's
+    // return type) — not resolving transitively through camera-lifecycle in this project.
+    implementation 'androidx.concurrent:concurrent-futures:1.1.0'
 
     // Google Maps + location (location tagging for lost/found items)
     implementation 'com.google.android.gms:play-services-maps:18.0.0'
