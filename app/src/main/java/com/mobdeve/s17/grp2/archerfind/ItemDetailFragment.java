@@ -112,6 +112,9 @@ public class ItemDetailFragment extends Fragment {
         FirebaseUser currentUser = authRepository.getCurrentUser();
         boolean isOwner = currentUser != null && currentUser.getUid().equals(item.getOwnerId());
         claimButton.setVisibility(isOwner || item.isResolved() ? View.GONE : View.VISIBLE);
+        // "Claim Item" only makes sense when responding to a Found post (asserting it's
+        // yours); responding to someone else's Lost post means you found it, not claiming it.
+        claimButton.setText("Found".equals(item.getStatus()) ? "Claim Item" : "I Found This Item");
 
         MaterialButton mapButton = view.findViewById(R.id.btn_view_on_map);
         if (item.hasLocation()) {
@@ -210,9 +213,13 @@ public class ItemDetailFragment extends Fragment {
                 if (!isAdded()) return;
                 claimButton.setEnabled(true);
 
+                boolean respondingToFoundPost = "Found".equals(currentItem.getStatus());
+                String notifTitle = respondingToFoundPost ? "Item Claimed" : "Possible Owner Found";
+                String notifMessage = respondingToFoundPost
+                        ? "Someone thinks your found '" + currentItem.getTitle() + "' belongs to them and wants to verify ownership."
+                        : "Someone thinks they found your lost '" + currentItem.getTitle() + "'.";
                 NotificationItem notification = new NotificationItem(currentItem.getOwnerId(),
-                        NotificationItem.TYPE_CLAIM, "Item Claimed",
-                        "Someone is interested in your '" + currentItem.getTitle() + "' posting.");
+                        NotificationItem.TYPE_CLAIM, notifTitle, notifMessage);
                 notification.setRelatedChatId(thread.getId());
                 notification.setRelatedItemId(currentItem.getId());
                 notificationRepository.create(notification, new FirestoreVoidCallback() {
