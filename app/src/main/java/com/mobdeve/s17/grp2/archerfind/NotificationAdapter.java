@@ -10,10 +10,15 @@ import java.util.List;
 
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
 
-    private final List<NotificationItem> notifications;
+    private List<NotificationItem> notifications;
 
     public NotificationAdapter(List<NotificationItem> notifications) {
         this.notifications = notifications;
+    }
+
+    public void setItems(List<NotificationItem> notifications) {
+        this.notifications = notifications;
+        notifyDataSetChanged();
     }
 
     @NonNull

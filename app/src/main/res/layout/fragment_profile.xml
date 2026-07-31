@@ -34,7 +34,7 @@
             android:id="@+id/tv_profile_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Juan Dela Cruz"
+            android:text=""
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_marginTop="16dp" />
@@ -43,7 +43,7 @@
             android:id="@+id/tv_profile_email"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="juan.delacruz@dlsu.edu.ph"
+            android:text=""
             android:textSize="14sp"
             android:textColor="#757575"
             android:layout_marginTop="4dp" />
@@ -52,7 +52,7 @@
             android:id="@+id/tv_profile_id"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ID: 12345678"
+            android:text=""
             android:textSize="14sp"
             android:textColor="#9E9E9E"
             android:layout_marginTop="4dp" />
@@ -61,7 +61,7 @@
             android:id="@+id/tv_profile_listing_count"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0 active listings"
+            android:text=""
             android:textSize="13sp"
             android:textColor="@color/green_primary"
             android:layout_marginTop="8dp" />
