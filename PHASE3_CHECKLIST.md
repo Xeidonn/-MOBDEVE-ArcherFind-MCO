@@ -56,12 +56,12 @@
 
 ## Search & Filter
 - [x] Real search queries against Firestore
-- [x] Filter by category, status (Lost/Found), date (Today); no separate location filter
+- [x] Filter by category, status (Lost/Found), date (Today), and location (dedicated text filter)
 - [x] Filter chips trigger actual queries (replace static list)
 
 ## Manage Listings
 - [x] Fetch only current user's posts from Firestore
-- [ ] Edit item — no dedicated edit screen; shows an explicit "not available yet" message
+- [x] Edit item — pre-fills the Post form (including photo/location) and updates the Firestore doc in place
 - [x] Delete item (removes the Firestore doc; does not also delete the Supabase photo object)
 - [x] Mark as Resolved/Claimed (only poster can do this)
 
@@ -69,6 +69,7 @@
 - [x] Firebase Cloud Messaging (FCM) client setup — token registration + FCMService
 - [x] Notify poster when someone claims their item (in-app, Firestore-backed)
 - [x] Notify poster when someone comments on their item (in-app, Firestore-backed)
+- [x] Notify users of a possible lost/found match when a new item is posted (same category + opposite status + unresolved)
 - [ ] Notify user when they receive a chat message
 - [x] Store notifications in Firestore for in-app notification list
 - **Note:** nothing server-side triggers an actual FCM *push* yet (needs a Cloud Function → Blaze plan); the in-app Notifications tab is the real, working delivery mechanism today.

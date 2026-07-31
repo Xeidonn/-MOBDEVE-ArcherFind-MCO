@@ -15,12 +15,12 @@ A mobile application that helps DLSU students report, search, and claim lost or 
 | 4 | Item Details | Photo (blurred for non-owners), description, date, location, comments, View on Map, Claim Item |
 | 5 | Post Lost Item | Title/description/category/location form, current-location capture, camera or gallery photo |
 | 6 | Post Found Item | Same form as Post Lost Item |
-| 7 | Search & Filter | Real Firestore search with text query + Lost/Found/category/Today filter chips |
+| 7 | Search & Filter | Real Firestore search with text query + Lost/Found/category/Today/location filters |
 | 8 | Chats | List of active claim conversations by item |
 | 9 | Chat Thread | Real-time messages with the other party; poster can reveal the unblurred photo |
-| 10 | Notifications | Real-time Firestore notifications (claim + comment events) |
+| 10 | Notifications | Real-time Firestore notifications (claim, comment, and possible-match events) |
 | 11 | Profile | Signed-in user's real name/email/student ID and active listing count |
-| 12 | Manage Listings | User's own posts — Resolve and Delete are live; Edit has no screen yet |
+| 12 | Manage Listings | User's own posts — Edit, Resolve, and Delete are all live |
 
 ## Tech Stack
 
@@ -89,10 +89,10 @@ Login ──→ Register
 
 ## Known Gaps / Scope Notes
 
-- **Edit listing** has no dedicated screen yet — Manage Listings shows an explicit "not available yet" message rather than a silent no-op.
-- **FCM push notifications**: the client-side plumbing (token registration, `FCMService`, notification channel) is real, but nothing server-side currently triggers a send for claim/comment/message events — that would need a Cloud Function, which requires the Blaze billing plan (the same reason Supabase was chosen over Firebase Cloud Storage). The in-app **Notifications** tab is real-time and fully working today.
+- **FCM push notifications**: the client-side plumbing (token registration, `FCMService`, notification channel) is real, but nothing server-side currently triggers a send for claim/comment/match/message events — that would need a Cloud Function, which requires the Blaze billing plan (the same reason Supabase was chosen over Firebase Cloud Storage). The in-app **Notifications** tab is real-time and fully working today.
 - **Firestore security rules** are in test mode (open read/write, expiring ~30 days after the Firestore database was created) rather than locked-down production rules.
 - Search is a one-shot fetch-and-filter (Firestore has no native substring query), not a live-updating query.
+- Match notifications use a simple heuristic (same category + opposite status + unresolved), not keyword/description similarity.
 
 ## Group 2
 
