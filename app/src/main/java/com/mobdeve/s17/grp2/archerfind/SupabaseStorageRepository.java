@@ -17,8 +17,6 @@ import okhttp3.Response;
 
 public class SupabaseStorageRepository {
 
-    private static final MediaType MEDIA_TYPE_JPEG = MediaType.parse("image/jpeg");
-
     private final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
@@ -26,8 +24,14 @@ public class SupabaseStorageRepository {
             .build();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    private static String extensionFor(String mimeType) {
+        if ("image/png".equals(mimeType)) return ".png";
+        if ("image/webp".equals(mimeType)) return ".webp";
+        return ".jpg";
+    }
+
     // Uploads to the public bucket configured via local.properties and returns its public URL.
-    public void uploadItemPhoto(byte[] imageBytes, FirestoreCallback<String> callback) {
+    public void uploadItemPhoto(byte[] imageBytes, String mimeType, FirestoreCallback<String> callback) {
         String supabaseUrl = BuildConfig.SUPABASE_URL;
         String anonKey = BuildConfig.SUPABASE_ANON_KEY;
         String bucket = BuildConfig.SUPABASE_BUCKET;
@@ -38,16 +42,17 @@ public class SupabaseStorageRepository {
             return;
         }
 
-        String path = "items/" + UUID.randomUUID() + ".jpg";
+        String effectiveMimeType = mimeType != null ? mimeType : "image/jpeg";
+        String path = "items/" + UUID.randomUUID() + extensionFor(effectiveMimeType);
         String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + path;
         String publicUrl = supabaseUrl + "/storage/v1/object/public/" + bucket + "/" + path;
 
-        RequestBody body = RequestBody.create(imageBytes, MEDIA_TYPE_JPEG);
+        RequestBody body = RequestBody.create(imageBytes, MediaType.parse(effectiveMimeType));
         Request request = new Request.Builder()
                 .url(uploadUrl)
                 .addHeader("apikey", anonKey)
                 .addHeader("Authorization", "Bearer " + anonKey)
-                .addHeader("Content-Type", "image/jpeg")
+                .addHeader("Content-Type", effectiveMimeType)
                 .post(body)
                 .build();
 

@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -11,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseUser;
@@ -59,6 +61,14 @@ public class ItemDetailFragment extends Fragment {
     }
 
     private void bindItem(View view, Item item, MaterialButton claimButton) {
+        ImageView photo = view.findViewById(R.id.iv_detail_photo);
+        Glide.with(photo.getContext())
+                .load(item.getPhotoUrl())
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.placeholder_image)
+                .centerCrop()
+                .into(photo);
+
         ((TextView) view.findViewById(R.id.tv_detail_title)).setText(item.getTitle());
         ((TextView) view.findViewById(R.id.tv_detail_description)).setText(item.getDescription());
         ((TextView) view.findViewById(R.id.tv_detail_location)).setText("📍 " + item.getLocation());

@@ -58,6 +58,9 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
+    // Explicit version needed for ActivityResultContracts.PickVisualMedia (the system Photo Picker)
+    implementation 'androidx.activity:activity:1.9.3'
+
     // Firebase (Auth, Firestore, Cloud Messaging)
     // NOTE: apply id 'com.google.gms.google-services' in the plugins block above
     // once app/google-services.json exists, or the build will fail.

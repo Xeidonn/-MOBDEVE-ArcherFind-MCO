@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import java.util.List;
 
 public class ManageItemAdapter extends RecyclerView.Adapter<ManageItemAdapter.ViewHolder> {
@@ -42,7 +43,12 @@ public class ManageItemAdapter extends RecyclerView.Adapter<ManageItemAdapter.Vi
         Item item = items.get(position);
         holder.title.setText(item.getTitle());
         holder.status.setText(item.isResolved() ? "Resolved" : item.getStatus());
-        holder.thumb.setImageResource(R.drawable.placeholder_image);
+        Glide.with(holder.thumb.getContext())
+                .load(item.getPhotoUrl())
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.placeholder_image)
+                .centerCrop()
+                .into(holder.thumb);
 
         holder.resolveButton.setEnabled(!item.isResolved());
         holder.resolveButton.setText(item.isResolved() ? "Resolved" : "Resolve");

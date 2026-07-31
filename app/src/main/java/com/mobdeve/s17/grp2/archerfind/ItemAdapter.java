@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import java.util.List;
 
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
@@ -42,7 +43,12 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
         holder.location.setText(item.getLocation());
         holder.date.setText(item.getFormattedDate());
         holder.status.setText(item.getStatus());
-        holder.thumb.setImageResource(R.drawable.placeholder_image);
+        Glide.with(holder.thumb.getContext())
+                .load(item.getPhotoUrl())
+                .placeholder(R.drawable.placeholder_image)
+                .error(R.drawable.placeholder_image)
+                .centerCrop()
+                .into(holder.thumb);
 
         if (item.getStatus().equals("Lost")) {
             holder.status.setBackgroundResource(R.color.badge_lost);

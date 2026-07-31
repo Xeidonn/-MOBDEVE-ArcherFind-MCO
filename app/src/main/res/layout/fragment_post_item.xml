@@ -21,29 +21,43 @@
             android:background="@color/green_primary"
             app:titleTextColor="@color/white" />
 
-        <!-- Photo picker button (UI only) -->
-        <LinearLayout
+        <!-- Photo picker: tap to open the system photo picker (gallery) -->
+        <FrameLayout
             android:id="@+id/photo_picker"
             android:layout_width="match_parent"
             android:layout_height="180dp"
-            android:gravity="center"
-            android:orientation="vertical"
             android:background="@drawable/placeholder_image"
             android:layout_marginTop="16dp">
 
             <ImageView
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_camera"
-                android:contentDescription="Add photo" />
+                android:id="@+id/iv_photo_preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:contentDescription="Selected photo" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tap to add photo"
-                android:textSize="14sp"
-                android:layout_marginTop="8dp" />
-        </LinearLayout>
+            <LinearLayout
+                android:id="@+id/photo_hint"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@android:drawable/ic_menu_camera"
+                    android:contentDescription="Add photo" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tap to add photo"
+                    android:textSize="14sp"
+                    android:layout_marginTop="8dp" />
+            </LinearLayout>
+        </FrameLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
