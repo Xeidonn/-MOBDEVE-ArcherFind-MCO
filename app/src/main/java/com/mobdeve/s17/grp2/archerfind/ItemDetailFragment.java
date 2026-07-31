@@ -21,6 +21,9 @@ public class ItemDetailFragment extends Fragment {
 
     private final ItemRepository itemRepository = new ItemRepository();
     private final AuthRepository authRepository = new AuthRepository();
+    private final ChatRepository chatRepository = new ChatRepository();
+    private final NotificationRepository notificationRepository = new NotificationRepository();
+    private Item currentItem;
 
     @Nullable
     @Override
@@ -36,8 +39,7 @@ public class ItemDetailFragment extends Fragment {
                 Navigation.findNavController(v).navigateUp());
 
         MaterialButton claimButton = view.findViewById(R.id.btn_claim);
-        claimButton.setOnClickListener(v ->
-                Snackbar.make(v, "Claim request submitted!", Snackbar.LENGTH_SHORT).show());
+        claimButton.setOnClickListener(v -> onClaimClicked(view, claimButton));
 
         String itemId = getArguments() != null ? getArguments().getString("itemId") : null;
         if (itemId == null) {
@@ -49,6 +51,7 @@ public class ItemDetailFragment extends Fragment {
             @Override
             public void onSuccess(Item item) {
                 if (!isAdded()) return;
+                currentItem = item;
                 bindItem(view, item, claimButton);
             }
 
@@ -87,5 +90,45 @@ public class ItemDetailFragment extends Fragment {
         FirebaseUser currentUser = authRepository.getCurrentUser();
         boolean isOwner = currentUser != null && currentUser.getUid().equals(item.getOwnerId());
         claimButton.setVisibility(isOwner || item.isResolved() ? View.GONE : View.VISIBLE);
+    }
+
+    private void onClaimClicked(View view, MaterialButton claimButton) {
+        FirebaseUser user = authRepository.getCurrentUser();
+        if (user == null || currentItem == null) return;
+
+        claimButton.setEnabled(false);
+        chatRepository.getOrCreateThread(currentItem.getId(), currentItem.getTitle(),
+                currentItem.getOwnerId(), user.getUid(), new FirestoreCallback<ChatThread>() {
+            @Override
+            public void onSuccess(ChatThread thread) {
+                if (!isAdded()) return;
+                claimButton.setEnabled(true);
+
+                NotificationItem notification = new NotificationItem(currentItem.getOwnerId(),
+                        NotificationItem.TYPE_CLAIM, "Item Claimed",
+                        "Someone is interested in your '" + currentItem.getTitle() + "' posting.");
+                notification.setRelatedChatId(thread.getId());
+                notification.setRelatedItemId(currentItem.getId());
+                notificationRepository.create(notification, new FirestoreVoidCallback() {
+                    @Override
+                    public void onSuccess() { /* best-effort, nothing to do */ }
+
+                    @Override
+                    public void onError(Exception e) { /* best-effort, don't block the chat navigation */ }
+                });
+
+                Bundle bundle = new Bundle();
+                bundle.putString("threadId", thread.getId());
+                bundle.putString("itemTitle", currentItem.getTitle());
+                Navigation.findNavController(view).navigate(R.id.action_itemDetail_to_chatThread, bundle);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                claimButton.setEnabled(true);
+                Snackbar.make(view, "Failed to start chat: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            }
+        });
     }
 }

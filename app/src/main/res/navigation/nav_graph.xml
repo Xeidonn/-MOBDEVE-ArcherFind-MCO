@@ -67,6 +67,10 @@
         <argument
             android:name="itemId"
             app:argType="string" />
+        <!-- Claim Item opens (or creates) a chat thread with the poster -->
+        <action
+            android:id="@+id/action_itemDetail_to_chatThread"
+            app:destination="@id/chatThreadFragment" />
     </fragment>
 
     <!-- Post Lost Item screen -->
@@ -125,5 +129,31 @@
         android:name="com.mobdeve.s17.grp2.archerfind.ManageListingsFragment"
         android:label="My Listings"
         tools:layout="@layout/fragment_manage_listings" />
+
+    <!-- Chats list (bottom nav tab) -->
+    <fragment
+        android:id="@+id/chatListFragment"
+        android:name="com.mobdeve.s17.grp2.archerfind.ChatListFragment"
+        android:label="Chats"
+        tools:layout="@layout/fragment_chat_list">
+        <action
+            android:id="@+id/action_chatList_to_chatThread"
+            app:destination="@id/chatThreadFragment" />
+    </fragment>
+
+    <!-- Chat thread screen -->
+    <fragment
+        android:id="@+id/chatThreadFragment"
+        android:name="com.mobdeve.s17.grp2.archerfind.ChatThreadFragment"
+        android:label="Chat"
+        tools:layout="@layout/fragment_chat_thread">
+        <argument
+            android:name="threadId"
+            app:argType="string" />
+        <argument
+            android:name="itemTitle"
+            app:argType="string"
+            android:defaultValue="Chat" />
+    </fragment>
 
 </navigation>

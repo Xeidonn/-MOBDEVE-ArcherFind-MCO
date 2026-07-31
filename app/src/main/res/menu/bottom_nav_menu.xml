@@ -9,6 +9,10 @@
         android:icon="@android:drawable/ic_menu_search"
         android:title="@string/nav_search" />
     <item
+        android:id="@+id/chatListFragment"
+        android:icon="@android:drawable/ic_dialog_email"
+        android:title="@string/nav_chats" />
+    <item
         android:id="@+id/notificationsFragment"
         android:icon="@android:drawable/ic_popup_reminder"
         android:title="@string/nav_notifications" />

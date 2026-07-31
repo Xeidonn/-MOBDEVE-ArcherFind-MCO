@@ -56,4 +56,17 @@ public class ChatThread {
         }
         return null;
     }
+
+    @Exclude
+    public String getRelativeLastMessageTime() {
+        if (lastMessageAt == null) return "";
+        long diffMs = System.currentTimeMillis() - lastMessageAt.getTime();
+        long minutes = diffMs / (60 * 1000);
+        if (minutes < 1) return "Just now";
+        if (minutes < 60) return minutes + "m ago";
+        long hours = minutes / 60;
+        if (hours < 24) return hours + "h ago";
+        long days = hours / 24;
+        return days + "d ago";
+    }
 }
