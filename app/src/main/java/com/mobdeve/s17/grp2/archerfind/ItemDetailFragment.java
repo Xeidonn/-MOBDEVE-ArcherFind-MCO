@@ -116,6 +116,16 @@ public class ItemDetailFragment extends Fragment {
         // yours); responding to someone else's Lost post means you found it, not claiming it.
         claimButton.setText("Found".equals(item.getStatus()) ? "Claim Item" : "I Found This Item");
 
+        ImageView mapPreview = view.findViewById(R.id.iv_map_preview);
+        if (item.hasLocation() && StaticMapUtil.isConfigured()) {
+            mapPreview.setVisibility(View.VISIBLE);
+            Glide.with(mapPreview.getContext())
+                    .load(StaticMapUtil.buildUrl(item.getLatitude(), item.getLongitude()))
+                    .into(mapPreview);
+        } else {
+            mapPreview.setVisibility(View.GONE);
+        }
+
         MaterialButton mapButton = view.findViewById(R.id.btn_view_on_map);
         if (item.hasLocation()) {
             mapButton.setVisibility(View.VISIBLE);

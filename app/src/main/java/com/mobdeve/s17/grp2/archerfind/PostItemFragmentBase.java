@@ -175,6 +175,7 @@ public abstract class PostItemFragmentBase extends Fragment {
                 if (item.hasLocation()) {
                     selectedLatitude = item.getLatitude();
                     selectedLongitude = item.getLongitude();
+                    showMapPreview(view, item.getLatitude(), item.getLongitude());
                 }
                 if (item.getPhotoUrl() != null) {
                     ImageView preview = view.findViewById(R.id.iv_photo_preview);
@@ -248,6 +249,15 @@ public abstract class PostItemFragmentBase extends Fragment {
             TextInputEditText etLocation = root.findViewById(R.id.et_post_location);
             etLocation.setText(addresses.get(0).getAddressLine(0));
         }
+
+        showMapPreview(root, selectedLatitude, selectedLongitude);
+    }
+
+    private void showMapPreview(View root, double latitude, double longitude) {
+        if (!StaticMapUtil.isConfigured()) return;
+        ImageView mapPreview = root.findViewById(R.id.iv_map_preview);
+        Glide.with(mapPreview.getContext()).load(StaticMapUtil.buildUrl(latitude, longitude)).into(mapPreview);
+        mapPreview.setVisibility(View.VISIBLE);
     }
 
     private void onPhotoPicked(Uri uri) {

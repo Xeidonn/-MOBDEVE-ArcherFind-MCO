@@ -36,6 +36,10 @@ android {
         versionName "1.0"
 
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "")
+        // Also exposed to Java (the manifest placeholder above is only readable by the
+        // Maps SDK's own meta-data tag, not from code) so the Static Maps preview URL
+        // can be built directly.
+        buildConfigField "String", "MAPS_API_KEY", "\"${localProperties.getProperty('MAPS_API_KEY', '')}\""
 
         buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('SUPABASE_URL', '')}\""
         buildConfigField "String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty('SUPABASE_ANON_KEY', '')}\""
