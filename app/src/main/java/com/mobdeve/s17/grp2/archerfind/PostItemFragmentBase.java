@@ -202,11 +202,36 @@ public abstract class PostItemFragmentBase extends Fragment {
         TextView statusView = root.findViewById(R.id.tv_location_status);
         statusView.setText("Detecting location...");
 
-        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, new CancellationTokenSource().getToken())
+        // High accuracy (GPS) rather than balanced (network-based): emulators simulate a
+        // GPS fix via Extended Controls but have no real Wi-Fi/cell signal to derive a
+        // network-based location from, so BALANCED_POWER_ACCURACY reliably returns null there.
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, new CancellationTokenSource().getToken())
+                .addOnSuccessListener(location -> {
+                    if (!isAdded()) return;
+                    if (location != null) {
+                        selectedLatitude = location.getLatitude();
+                        selectedLongitude = location.getLongitude();
+                        reverseGeocode(location.getLatitude(), location.getLongitude());
+                    } else {
+                        useLastKnownLocationOrFail(statusView);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    useLastKnownLocationOrFail(statusView);
+                });
+    }
+
+    // A fresh fix can fail to arrive (GPS not yet locked, emulator never sent a coordinate)
+    // even though a recent enough cached fix already exists — try that before giving up.
+    @SuppressLint("MissingPermission")
+    private void useLastKnownLocationOrFail(TextView statusView) {
+        fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
                     if (!isAdded()) return;
                     if (location == null) {
-                        statusView.setText("Couldn't detect your location. Try again outdoors or with location enabled.");
+                        statusView.setText("Couldn't detect your location. On an emulator, set one via "
+                                + "Extended Controls → Location → Send. On a device, try again outdoors.");
                         return;
                     }
                     selectedLatitude = location.getLatitude();
