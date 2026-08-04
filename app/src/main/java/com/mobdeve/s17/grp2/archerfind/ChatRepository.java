@@ -115,10 +115,22 @@ public class ChatRepository {
                     Map<String, Object> update = new HashMap<>();
                     update.put("lastMessage", message.getText() != null ? message.getText() : "Sent a photo");
                     update.put("lastMessageAt", FieldValue.serverTimestamp());
+                    update.put("lastMessageSenderId", message.getSenderId());
+                    // Sending counts as having read up to this point, so the sender never
+                    // sees their own message reflected back as an unread badge.
+                    update.put("lastReadAt." + message.getSenderId(), FieldValue.serverTimestamp());
                     db.collection("chatThreads").document(threadId).update(update)
                             .addOnSuccessListener(unused -> callback.onSuccess())
                             .addOnFailureListener(callback::onError);
                 })
+                .addOnFailureListener(callback::onError);
+    }
+
+    // Called whenever a user is actively viewing a thread, so the unread badge clears.
+    public void markThreadRead(String threadId, String userId, FirestoreVoidCallback callback) {
+        db.collection("chatThreads").document(threadId)
+                .update("lastReadAt." + userId, FieldValue.serverTimestamp())
+                .addOnSuccessListener(unused -> callback.onSuccess())
                 .addOnFailureListener(callback::onError);
     }
 }

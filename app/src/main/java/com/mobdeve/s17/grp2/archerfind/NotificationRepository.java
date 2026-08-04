@@ -3,6 +3,7 @@ package com.mobdeve.s17.grp2.archerfind;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +52,28 @@ public class NotificationRepository {
         db.collection("notifications").document(notificationId)
                 .update("read", true)
                 .addOnSuccessListener(unused -> callback.onSuccess())
+                .addOnFailureListener(callback::onError);
+    }
+
+    // Called when the Notifications tab is opened, so the unread badge clears.
+    public void markAllRead(String userId, FirestoreVoidCallback callback) {
+        db.collection("notifications")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("read", false)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    if (snapshots.isEmpty()) {
+                        callback.onSuccess();
+                        return;
+                    }
+                    WriteBatch batch = db.batch();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        batch.update(doc.getReference(), "read", true);
+                    }
+                    batch.commit()
+                            .addOnSuccessListener(unused -> callback.onSuccess())
+                            .addOnFailureListener(callback::onError);
+                })
                 .addOnFailureListener(callback::onError);
     }
 }

@@ -30,6 +30,14 @@ public class ChatThreadFragment extends Fragment {
     private ListenerRegistration messagesListener;
     private String threadId;
 
+    private MaterialButton revealButton;
+    private MaterialButton resolveButton;
+    // Whether the signed-in user is even allowed to see the reveal button (owner + item has a photo).
+    private boolean canRevealPhoto;
+    // Whether a reveal message already exists in this thread's history — derived from the
+    // messages themselves so the button stays hidden even after leaving and reopening the chat.
+    private boolean photoAlreadyRevealed;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -62,6 +70,24 @@ public class ChatThreadFragment extends Fragment {
                 if (!isAdded()) return;
                 adapter.setItems(messages);
                 if (!messages.isEmpty()) rv.scrollToPosition(messages.size() - 1);
+
+                for (Message m : messages) {
+                    if (m.getRevealPhotoUrl() != null) {
+                        photoAlreadyRevealed = true;
+                        break;
+                    }
+                }
+                updateRevealButtonVisibility();
+
+                // Viewing the thread is the "seen it" signal, so re-stamp on every update
+                // (covers both opening the thread and receiving a message while still in it).
+                chatRepository.markThreadRead(threadId, user.getUid(), new FirestoreVoidCallback() {
+                    @Override
+                    public void onSuccess() { /* best-effort */ }
+
+                    @Override
+                    public void onError(Exception e) { /* best-effort */ }
+                });
             }
 
             @Override
@@ -91,13 +117,14 @@ public class ChatThreadFragment extends Fragment {
             });
         });
 
-        setupRevealPhotoButton(view, user.getUid());
+        revealButton = view.findViewById(R.id.btn_reveal_photo);
+        resolveButton = view.findViewById(R.id.btn_mark_resolved);
+        setupOwnerControls(view, user.getUid());
     }
 
-    // Only the item's original poster can reveal the unblurred photo, and only
-    // once we know which item this thread is about (fetched via the thread doc).
-    private void setupRevealPhotoButton(View view, String currentUserId) {
-        MaterialButton revealButton = view.findViewById(R.id.btn_reveal_photo);
+    // Only the item's original poster gets the reveal-photo and mark-resolved controls, and
+    // only once we know which item this thread is about (fetched via the thread doc).
+    private void setupOwnerControls(View view, String currentUserId) {
         chatRepository.getThread(threadId, new FirestoreCallback<ChatThread>() {
             @Override
             public void onSuccess(ChatThread thread) {
@@ -105,35 +132,77 @@ public class ChatThreadFragment extends Fragment {
                 itemRepository.getItem(thread.getItemId(), new FirestoreCallback<Item>() {
                     @Override
                     public void onSuccess(Item item) {
-                        if (!isAdded() || !currentUserId.equals(item.getOwnerId()) || item.getPhotoUrl() == null) return;
-                        revealButton.setVisibility(View.VISIBLE);
-                        revealButton.setOnClickListener(v -> {
-                            revealButton.setEnabled(false);
-                            Message message = new Message(currentUserId, "📷 Shared the original photo for verification");
-                            message.setRevealPhotoUrl(item.getPhotoUrl());
-                            chatRepository.sendMessage(threadId, message, new FirestoreVoidCallback() {
-                                @Override
-                                public void onSuccess() {
-                                    if (isAdded()) revealButton.setVisibility(View.GONE);
-                                }
+                        if (!isAdded() || !currentUserId.equals(item.getOwnerId())) return;
 
-                                @Override
-                                public void onError(Exception e) {
-                                    if (!isAdded()) return;
-                                    revealButton.setEnabled(true);
-                                    Snackbar.make(view, "Failed to reveal photo: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
-                                }
-                            });
-                        });
+                        canRevealPhoto = item.getPhotoUrl() != null;
+                        updateRevealButtonVisibility();
+                        revealButton.setOnClickListener(v -> revealPhoto(view, currentUserId, item));
+
+                        resolveButton.setVisibility(item.isResolved() ? View.GONE : View.VISIBLE);
+                        resolveButton.setOnClickListener(v -> markResolved(view, currentUserId, item));
                     }
 
                     @Override
-                    public void onError(Exception e) { /* item may have been deleted since; just skip the button */ }
+                    public void onError(Exception e) { /* item may have been deleted since; just skip the controls */ }
                 });
             }
 
             @Override
-            public void onError(Exception e) { /* skip the button if the thread lookup fails */ }
+            public void onError(Exception e) { /* skip the controls if the thread lookup fails */ }
+        });
+    }
+
+    private void updateRevealButtonVisibility() {
+        if (revealButton == null) return;
+        revealButton.setVisibility(canRevealPhoto && !photoAlreadyRevealed ? View.VISIBLE : View.GONE);
+    }
+
+    private void revealPhoto(View view, String currentUserId, Item item) {
+        revealButton.setEnabled(false);
+        Message message = new Message(currentUserId, "📷 Shared the original photo for verification");
+        message.setRevealPhotoUrl(item.getPhotoUrl());
+        chatRepository.sendMessage(threadId, message, new FirestoreVoidCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                photoAlreadyRevealed = true;
+                updateRevealButtonVisibility();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                revealButton.setEnabled(true);
+                Snackbar.make(view, "Failed to reveal photo: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    // Lets the poster resolve the item from the chat itself, instead of going back to
+    // Manage Listings, and lets the other party know it happened right in the conversation.
+    private void markResolved(View view, String currentUserId, Item item) {
+        resolveButton.setEnabled(false);
+        itemRepository.setResolved(item.getId(), true, new FirestoreVoidCallback() {
+            @Override
+            public void onSuccess() {
+                if (!isAdded()) return;
+                resolveButton.setVisibility(View.GONE);
+                Snackbar.make(view, "Marked '" + item.getTitle() + "' as resolved.", Snackbar.LENGTH_SHORT).show();
+                chatRepository.sendMessage(threadId, new Message(currentUserId, "✅ Marked this item as resolved."), new FirestoreVoidCallback() {
+                    @Override
+                    public void onSuccess() { /* best-effort */ }
+
+                    @Override
+                    public void onError(Exception e) { /* best-effort */ }
+                });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (!isAdded()) return;
+                resolveButton.setEnabled(true);
+                Snackbar.make(view, "Failed to mark resolved: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            }
         });
     }
 

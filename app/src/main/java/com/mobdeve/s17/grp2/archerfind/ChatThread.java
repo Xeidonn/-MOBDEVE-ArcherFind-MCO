@@ -4,7 +4,9 @@ import com.google.firebase.firestore.Exclude;
 import com.google.firebase.firestore.ServerTimestamp;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Date;
 
 public class ChatThread {
@@ -13,8 +15,12 @@ public class ChatThread {
     private String itemId;
     private String itemTitle;
     private String lastMessage;
+    private String lastMessageSenderId;
     @ServerTimestamp
     private Date lastMessageAt;
+    // Per-participant "last opened this thread" timestamp, keyed by uid; used to derive
+    // unread state instead of a plain boolean, since a thread has more than one reader.
+    private Map<String, Date> lastReadAt = new HashMap<>();
 
     // Required no-arg constructor for Firestore deserialization.
     public ChatThread() {
@@ -47,6 +53,21 @@ public class ChatThread {
 
     public Date getLastMessageAt() { return lastMessageAt; }
     public void setLastMessageAt(Date lastMessageAt) { this.lastMessageAt = lastMessageAt; }
+
+    public String getLastMessageSenderId() { return lastMessageSenderId; }
+    public void setLastMessageSenderId(String lastMessageSenderId) { this.lastMessageSenderId = lastMessageSenderId; }
+
+    public Map<String, Date> getLastReadAt() { return lastReadAt; }
+    public void setLastReadAt(Map<String, Date> lastReadAt) { this.lastReadAt = lastReadAt; }
+
+    // A thread is unread for a user if someone else sent the last message and this user
+    // hasn't opened the thread since then (or never has).
+    @Exclude
+    public boolean isUnreadFor(String userId) {
+        if (lastMessageAt == null || userId.equals(lastMessageSenderId)) return false;
+        Date readAt = lastReadAt != null ? lastReadAt.get(userId) : null;
+        return readAt == null || readAt.before(lastMessageAt);
+    }
 
     @Exclude
     public String getOtherParticipantId(String currentUserId) {

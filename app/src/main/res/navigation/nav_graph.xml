@@ -108,7 +108,16 @@
         android:id="@+id/notificationsFragment"
         android:name="com.mobdeve.s17.grp2.archerfind.NotificationsFragment"
         android:label="Notifications"
-        tools:layout="@layout/fragment_notifications" />
+        tools:layout="@layout/fragment_notifications">
+        <!-- Match/comment notifications point at an item -->
+        <action
+            android:id="@+id/action_notifications_to_itemDetail"
+            app:destination="@id/itemDetailFragment" />
+        <!-- Claim notifications point at the chat thread it opened -->
+        <action
+            android:id="@+id/action_notifications_to_chatThread"
+            app:destination="@id/chatThreadFragment" />
+    </fragment>
 
     <!-- Profile (bottom nav tab) -->
     <fragment

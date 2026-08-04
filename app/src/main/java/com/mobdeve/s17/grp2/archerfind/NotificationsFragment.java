@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -38,7 +39,18 @@ public class NotificationsFragment extends Fragment {
 
         RecyclerView rv = view.findViewById(R.id.rv_notifications);
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new NotificationAdapter(new ArrayList<>());
+        adapter = new NotificationAdapter(new ArrayList<>(), notification -> {
+            Bundle bundle = new Bundle();
+            if (notification.getRelatedChatId() != null) {
+                bundle.putString("threadId", notification.getRelatedChatId());
+                Navigation.findNavController(view).navigate(R.id.action_notifications_to_chatThread, bundle);
+            } else if (notification.getRelatedItemId() != null) {
+                bundle.putString("itemId", notification.getRelatedItemId());
+                Navigation.findNavController(view).navigate(R.id.action_notifications_to_itemDetail, bundle);
+            } else {
+                Snackbar.make(view, "Nothing to open for this notification.", Snackbar.LENGTH_SHORT).show();
+            }
+        });
         rv.setAdapter(adapter);
 
         TextView emptyState = view.findViewById(R.id.tv_notifications_empty);
@@ -59,6 +71,15 @@ public class NotificationsFragment extends Fragment {
                 if (!isAdded()) return;
                 Snackbar.make(view, "Failed to load notifications: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
             }
+        });
+
+        // Opening this tab is the "seen it" signal — clears the unread badge on the bottom nav.
+        notificationRepository.markAllRead(user.getUid(), new FirestoreVoidCallback() {
+            @Override
+            public void onSuccess() { /* best-effort */ }
+
+            @Override
+            public void onError(Exception e) { /* best-effort */ }
         });
     }
 
